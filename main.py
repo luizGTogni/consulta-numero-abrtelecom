@@ -17,13 +17,17 @@ is_warning_recaptcha_valid = True
 
 while not is_recaptcha_resolved:
     
-    is_recaptcha_resolved = driver.execute_script("return document.getElementById('g-recaptcha-response').value")
+    is_recaptcha_resolved = driver.execute_script('return document.getElementById("g-recaptcha-response").value')
 
     if is_recaptcha_resolved:
-        print("CAPTCHA resolvido!")
+        time.sleep(2)
+        button_consult = driver.find_element(By.ID, 'idSubmit')
+        button_consult.click()
+
+        
     else:
         if is_warning_recaptcha_valid:
-            print("RESOLVA O RECAPTCHA MANUALMENTE")
+            print('RESOLVA O RECAPTCHA MANUALMENTE')
             is_warning_recaptcha_valid = False
 
 time.sleep(5)
