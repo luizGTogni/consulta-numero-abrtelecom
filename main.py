@@ -1,14 +1,19 @@
 import time
 import sqlite3
 import pandas as pd
+import shutil
 
-from os import path, getcwd
+from os import path, getcwd, makedirs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 from datetime import datetime
+
+FILE_PATH = path.join(path.dirname(__file__), 'temp')
 
 conn = sqlite3.connect('abrtelecom_datas.db') 
 cursor = conn.cursor()
@@ -31,6 +36,12 @@ options.add_argument('--start-maximized')
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 driver.get('https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg')
+
+Tk().withdraw()
+
+file = askopenfilename(title='Selecione o arquivo de número de telefones', filetypes=[('Arquivo, CSV', '*.csv'), ("Arquivos Excel", "*.xlsx *.xls")])
+makedirs(FILE_PATH, exist_ok=True)
+shutil.copy(file, FILE_PATH)
 
 input_file = driver.find_element(By.ID, 'arquivo')
 input_file.send_keys(path.join(getcwd(), 'temp', 'phones.csv'))
