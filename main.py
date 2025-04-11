@@ -1,10 +1,28 @@
 import time
+import sqlite3
 
 from os import path, getcwd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from datetime import datetime
+
+conn = sqlite3.connect('abrtelecom_datas.db') 
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS consults (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT UNIQUE NOT NULL,
+    provider_name TEXT NOT NULL,
+    date_recent TEXT,
+    number_months INTEGER,
+    message TEXT NOT NULL
+)
+""")
+
+conn.commit()
 
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get('https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg')
@@ -24,11 +42,43 @@ while not is_recaptcha_resolved:
         button_consult = driver.find_element(By.ID, 'idSubmit')
         button_consult.click()
 
-        
+        table = driver.find_element(By.ID, 'resultado')
+        table_body = table.find_element(By.TAG_NAME, "tbody")
+        table_lines = table_body.find_elements(By.TAG_NAME, 'tr')
+
+        for line in table_lines:
+            column = line.find_elements(By.TAG_NAME, 'td')
+            phone = column[0].text
+            provider_name = column[1].text
+            date_recent = column[3].text
+            message = column[4].text
+
+            consult = cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
+
+            date_recent_format = None
+            number_months = None
+            if len(date_recent) > 0:
+                date_recent_convert = datetime.strptime(date_recent, '%d/%m/%Y %H:%M')
+                date_recent_format = date_recent_convert.strftime('%Y-%m-%d %H:%M:%S')
+
+                today = datetime.now()
+
+                years = today.year - date_recent_convert.year
+                months = today.month - date_recent_convert.month
+
+                number_months = years * 12 + months
+
+            if consult:
+                cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
+            else:
+                cursor.execute("INSERT INTO consults (phone, provider_name, date_recent, number_months, message) VALUES (?, ?, ?, ?, ?)", (phone, provider_name, date_recent_format, number_months, message))
+            
+            conn.commit()
     else:
         if is_warning_recaptcha_valid:
             print('RESOLVA O RECAPTCHA MANUALMENTE')
             is_warning_recaptcha_valid = False
 
 time.sleep(5)
+conn.close()
 driver.quit()
