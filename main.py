@@ -1,14 +1,15 @@
 import time
-import sqlite3
 import pandas as pd
 import shutil
 import math
+
+from db.DBConfig import DBConfig
+from services.AutomationBrowser import AutomationBrowser
 
 from os import path, getcwd, makedirs, rename, remove
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
@@ -16,21 +17,7 @@ from datetime import datetime
 
 FILE_PATH = path.join(path.dirname(__file__), 'temp')
 
-conn = sqlite3.connect('abrtelecom_datas.db') 
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS consults (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    phone TEXT UNIQUE NOT NULL,
-    provider_name TEXT NOT NULL,
-    date_recent TEXT,
-    number_months INTEGER,
-    message TEXT NOT NULL
-)
-""")
-
-conn.commit()
+db = DBConfig(name_db='data')
 
 options = Options()
 options.add_argument('--start-maximized')
@@ -142,4 +129,4 @@ if path.exists(f'{FILE_PATH}/phones.csv'):
 driver.execute_script("document.body.style.zoom='100%'")
 time.sleep(2)
 driver.quit()
-conn.close()
+db.close()
