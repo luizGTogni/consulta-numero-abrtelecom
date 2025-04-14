@@ -4,12 +4,12 @@ import shutil
 import math
 
 from db.DBConfig import DBConfig
-from services.AutomationBrowser import AutomationBrowser
 
 from os import path, getcwd, makedirs, rename, remove
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
@@ -84,7 +84,7 @@ while count < rounds_scrapping:
                 date_recent = column[3].text
                 message = column[4].text
 
-                consult = cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
+                consult = db.cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
 
                 date_recent_format = None
                 number_months = None
@@ -100,14 +100,14 @@ while count < rounds_scrapping:
                     number_months = years * 12 + months
 
                 if consult:
-                    cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
+                    db.cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
                 else:
-                    cursor.execute("INSERT INTO consults (phone, provider_name, date_recent, number_months, message) VALUES (?, ?, ?, ?, ?)", (phone, provider_name, date_recent_format, number_months, message))
+                    db.cursor.execute("INSERT INTO consults (phone, provider_name, date_recent, number_months, message) VALUES (?, ?, ?, ?, ?)", (phone, provider_name, date_recent_format, number_months, message))
                 
-                conn.commit()
+                db.conn.commit()
 
                 # CONVERTER EM EXCEL
-                df = pd.read_sql_query('SELECT * FROM consults', conn)
+                df = pd.read_sql_query('SELECT * FROM consults', db.conn)
                 df.rename(columns={
                     'phone': 'TELEFONE',
                     'provider_name': 'PRESTADORA',
