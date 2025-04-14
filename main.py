@@ -1,8 +1,9 @@
 import time
-import sqlite3
 import pandas as pd
 import shutil
 import math
+
+from db.DBConfig import DBConfig
 
 from os import path, getcwd, makedirs, rename, remove
 from selenium import webdriver
@@ -16,21 +17,7 @@ from datetime import datetime
 
 FILE_PATH = path.join(path.dirname(__file__), 'temp')
 
-conn = sqlite3.connect('abrtelecom_datas.db') 
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS consults (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    phone TEXT UNIQUE NOT NULL,
-    provider_name TEXT NOT NULL,
-    date_recent TEXT,
-    number_months INTEGER,
-    message TEXT NOT NULL
-)
-""")
-
-conn.commit()
+db = DBConfig(name_db='data')
 
 options = Options()
 options.add_argument('--start-maximized')
@@ -97,7 +84,7 @@ while count < rounds_scrapping:
                 date_recent = column[3].text
                 message = column[4].text
 
-                consult = cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
+                consult = db.cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
 
                 date_recent_format = None
                 number_months = None
@@ -113,14 +100,14 @@ while count < rounds_scrapping:
                     number_months = years * 12 + months
 
                 if consult:
-                    cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
+                    db.cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
                 else:
-                    cursor.execute("INSERT INTO consults (phone, provider_name, date_recent, number_months, message) VALUES (?, ?, ?, ?, ?)", (phone, provider_name, date_recent_format, number_months, message))
+                    db.cursor.execute("INSERT INTO consults (phone, provider_name, date_recent, number_months, message) VALUES (?, ?, ?, ?, ?)", (phone, provider_name, date_recent_format, number_months, message))
                 
-                conn.commit()
+                db.conn.commit()
 
                 # CONVERTER EM EXCEL
-                df = pd.read_sql_query('SELECT * FROM consults', conn)
+                df = pd.read_sql_query('SELECT * FROM consults', db.conn)
                 df.rename(columns={
                     'phone': 'TELEFONE',
                     'provider_name': 'PRESTADORA',
@@ -142,4 +129,4 @@ if path.exists(f'{FILE_PATH}/phones.csv'):
 driver.execute_script("document.body.style.zoom='100%'")
 time.sleep(2)
 driver.quit()
-conn.close()
+db.close()
