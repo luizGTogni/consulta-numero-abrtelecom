@@ -1,32 +1,20 @@
-import time
 import pandas as pd
 import shutil
 import math
 
 from db.DBConfig import DBConfig
+from services.AutomationBrowser import AutomationBrowser
 
-from os import path, getcwd, makedirs, rename, remove
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+from os import path, makedirs, rename, remove
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 from datetime import datetime
 
 FILE_PATH = path.join(path.dirname(__file__), 'temp')
+INITIAL_URL = 'https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg'
 
 db = DBConfig(name_db='data')
-
-options = Options()
-options.add_argument('--start-maximized')
-options.add_argument('--user-data-dir=/chrome_profile')
-options.add_experimental_option("detach", True)
-
-
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-driver.get('https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg')
+automation = AutomationBrowser(INITIAL_URL)
 
 Tk().withdraw()
 
@@ -38,8 +26,6 @@ filename = path.basename(file)
 makedirs(FILE_PATH, exist_ok=True)
 shutil.copy(file, FILE_PATH)
 rename(f'{FILE_PATH}/{filename}', f'{FILE_PATH}/phones.csv')
-
-# 99 LINES MAX
 
 df_phones = pd.read_csv(f'{FILE_PATH}/phones.csv')
 rounds_scrapping = math.ceil(len(df_phones) / 99)
@@ -55,30 +41,19 @@ while count < rounds_scrapping:
 
     df_phones[start:end].to_csv('temp/datas.csv', index=False)
 
-    input_file = driver.find_element(By.ID, 'arquivo')
-    input_file.send_keys(path.join(getcwd(), 'temp', 'datas.csv'))
+    automation.send_file(id_element='arquivo', filename='datas.csv')
 
-    is_recaptcha_resolved = False
+    is_recaptcha_resolved = automation.get_recaptcha_response()
     is_warning_recaptcha_valid = True
 
     while not is_recaptcha_resolved:
-        
-        is_recaptcha_resolved = driver.execute_script('return document.getElementById("g-recaptcha-response").value')
-
         if is_recaptcha_resolved:
-            driver.execute_script("document.body.style.zoom='50%'")
-            time.sleep(2)
-            button_consult = driver.find_element(By.ID, 'idSubmit')
-            button_consult.click()
-
-            time.sleep(4)
-
-            table = driver.find_element(By.ID, 'resultado')
-            table_body = table.find_element(By.TAG_NAME, "tbody")
-            table_lines = table_body.find_elements(By.TAG_NAME, 'tr')
-
+            automation.set_zoom(value=50, delay_after=2)
+            automation.click_button(id_element='idSubmit', delay_after=4)
+            table_lines = automation.get_lines_table(id_table='resultado')
+    
             for line in table_lines:
-                column = line.find_elements(By.TAG_NAME, 'td')
+                column = automation.get_value_column(line_element=line)
                 phone = column[0].text
                 provider_name = column[1].text
                 date_recent = column[3].text
@@ -126,7 +101,6 @@ while count < rounds_scrapping:
 if path.exists(f'{FILE_PATH}/phones.csv'):
     remove(f'{FILE_PATH}/phones.csv')
 
-driver.execute_script("document.body.style.zoom='100%'")
-time.sleep(2)
-driver.quit()
+automation.set_zoom(100, delay_after=2)
+automation.close()
 db.close()
