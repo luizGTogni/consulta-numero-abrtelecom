@@ -39,14 +39,14 @@ class Utils:
         return new_filename
     
     def date_format(self, date):
-        if len(date) > 0:
+        if len(date) <= 0:
             return None
 
         date_convert = datetime.strptime(date, '%d/%m/%Y %H:%M')
         return date_convert.strftime('%Y-%m-%d %H:%M:%S')
     
     def calc_number_months(self, date):
-        if len(date) > 0:
+        if len(date) <= 0:
             return None
 
         date_convert = datetime.strptime(date, '%d/%m/%Y %H:%M')
