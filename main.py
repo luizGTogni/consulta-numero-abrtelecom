@@ -6,14 +6,13 @@ from services.Utils import Utils
 from services.AutomationBrowser import AutomationBrowser
 
 def main():
-    db = DBConfig(name_db='data')
-    consultDB = Consult(db)
-    utils = Utils()
-
     LIMIT_PER_ROUND = 99
     INITIAL_URL = 'https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg'
 
     automation = AutomationBrowser(INITIAL_URL)
+    db = DBConfig(name_db='data')
+    consultDB = Consult(db)
+    utils = Utils()
 
     filename_default = utils.select_file()
 
@@ -40,14 +39,15 @@ def main():
                     date_recent_format = utils.date_format(column['date_recent'])
                     number_months = utils.calc_number_months(column['date_recent'])
                     consults.append({'phone': column['phone'], 'provider_name': column['provider_name'], 'date_recent_format': date_recent_format, 'number_months': number_months, 'message': column['message']})
-                    #print(column['phone'], column['provider_name'], date_recent_format, number_months, column['message'])
             else:
                 if is_warning_recaptcha_valid:
-                    print('RESOLVA O RECAPTCHA MANUALMENTE')
+                    print('RESOLVA O RECAPTCHA MANUALMENTE\n')
                     is_warning_recaptcha_valid = False
     
     for consult in consults:
+        print('SALVANDO NO BANCO DE DADOS...\n')
         consultDB.create_by_phone(consult['phone'], consult['provider_name'], consult['date_recent_format'], consult['number_months'], consult['message'])
+        print('BANCO DE DADOS SALVOU\n')
 
     utils.remove(utils.FILE_PATH, is_purge=True)
     automation.set_zoom(100, delay_after=2)
