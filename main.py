@@ -1,37 +1,22 @@
 import pandas as pd
-import shutil
 
 from db.DBConfig import DBConfig
+from services.Utils import Utils
 from services.AutomationBrowser import AutomationBrowser
-
-from os import path, makedirs, rename, remove, getcwd
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
 from datetime import datetime
 
-FILE_PATH = path.join(getcwd(), 'temp')
 LIMIT_PER_ROUND = 99
 INITIAL_URL = 'https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg'
 
 db = DBConfig(name_db='data')
 automation = AutomationBrowser(INITIAL_URL)
+utils = Utils()
 
-Tk().withdraw()
-
-if path.exists(f'{FILE_PATH}/phones.csv'):
-    remove(f'{FILE_PATH}/phones.csv')
-    
-
-file = askopenfilename(title='Selecione o arquivo de número de telefones', filetypes=[('Arquivo, CSV', '*.csv'), ("Arquivos Excel", "*.xlsx *.xls")])
-filename = path.basename(file)
-makedirs(FILE_PATH, exist_ok=True)
-shutil.copy(file, FILE_PATH)
-rename(f'{FILE_PATH}/{filename}', f'{FILE_PATH}/phones.csv')
+filename_default = utils.select_file()
 
 is_continue = True
-
 while is_continue:
-    is_continue = automation.send_file(id_element='arquivo', filename='phones.csv', limit_per_line=99)
+    is_continue = automation.send_file(id_element='arquivo', filename=filename_default, limit_per_line=LIMIT_PER_ROUND)
     is_warning_recaptcha_valid = True
 
     is_recaptcha_response = False
@@ -90,9 +75,7 @@ while is_continue:
                 print('RESOLVA O RECAPTCHA MANUALMENTE')
                 is_warning_recaptcha_valid = False
 
-if path.exists(f'{FILE_PATH}/phones.csv'):
-    remove(f'{FILE_PATH}/phones.csv')
-
+utils.remove(utils.FILE_PATH)
 automation.set_zoom(100, delay_after=2)
 automation.close()
 db.close()

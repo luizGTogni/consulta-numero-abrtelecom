@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import pandas as pd
 
 from time import sleep
@@ -31,7 +32,7 @@ class AutomationBrowser:
 
     def send_file(self, id_element, filename, limit_per_line=0, delay_before=0):
         file_path = self.save_temp_path(filename)
-        final_file_path = self.save_temp_path('datas.csv')
+        final_file_path = self.save_temp_path(f'{time.time()}.csv')
         sleep(delay_before)
         
         element = self._driver.find_element(By.ID, id_element)
@@ -41,7 +42,6 @@ class AutomationBrowser:
             rounds = math.ceil(len(df_phones) / 99)
             #print(f'Tem {len(df_phones)} linhas nesse arquivo')
             #print(f'São necessários {rounds} voltas nesse arquivo')
-
 
             df_phones[:limit_per_line].to_csv(final_file_path, index=False)
             df_phones[limit_per_line:].to_csv(file_path, index=False)
