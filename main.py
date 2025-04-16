@@ -7,7 +7,7 @@ from services.AutomationBrowser import AutomationBrowser
 
 def main():
     db = DBConfig(name_db='data')
-    consult = Consult(db)
+    consultDB = Consult(db)
     utils = Utils()
 
     LIMIT_PER_ROUND = 99
@@ -19,6 +19,7 @@ def main():
 
     is_continue = True
     start_total_time = time.time()
+    consults = []
     while is_continue:
         is_continue = automation.send_file(id_element='arquivo', filename=filename_default, limit_per_line=LIMIT_PER_ROUND)
         is_warning_recaptcha_valid = True
@@ -35,24 +36,23 @@ def main():
 
                 for line in table_lines:
                     column = automation.get_value_column(line_element=line)
-                    phone = column[0].text
-                    provider_name = column[1].text
-                    date_recent = column[3].text
-                    message = column[4].text
 
-                    date_recent_format = utils.date_format(date_recent)
-                    number_months = utils.calc_number_months(date_recent)
-
-                    consult.create_by_phone(phone, provider_name, date_recent_format, number_months, message)
+                    date_recent_format = utils.date_format(column['date_recent'])
+                    number_months = utils.calc_number_months(column['date_recent'])
+                    consults.append({'phone': column['phone'], 'provider_name': column['provider_name'], 'date_recent_format': date_recent_format, 'number_months': number_months, 'message': column['message']})
+                    #print(column['phone'], column['provider_name'], date_recent_format, number_months, column['message'])
             else:
                 if is_warning_recaptcha_valid:
                     print('RESOLVA O RECAPTCHA MANUALMENTE')
                     is_warning_recaptcha_valid = False
     
+    for consult in consults:
+        consultDB.create_by_phone(consult['phone'], consult['provider_name'], consult['date_recent_format'], consult['number_months'], consult['message'])
+
     utils.remove(utils.FILE_PATH, is_purge=True)
     automation.set_zoom(100, delay_after=2)
     
-    consult.to_excel()
+    consultDB.to_excel()
     db.close()
     automation.close()
 

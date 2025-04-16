@@ -32,6 +32,6 @@ class Consult:
             'number_months': 'M',
             'message': 'MENSAGEM',
         }, inplace=True)
-        os.makedirs(os.path.join(os.getcwd(), 'final'))
+        os.makedirs(os.path.join(os.getcwd(), 'final'), exist_ok=True)
         filename = f'{time.time()}-consults.xlsx'
         df.to_excel(os.path.join(os.getcwd(), 'final', filename), index=False)
