@@ -4,6 +4,7 @@ import time
 
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
+from datetime import datetime
 
 class Utils:
     def __init__(self):
@@ -36,3 +37,22 @@ class Utils:
         os.rename(os.path.join(self.FILE_PATH, filename), os.path.join(self.FILE_PATH, new_filename))
 
         return new_filename
+    
+    def date_format(self, date):
+        if len(date) > 0:
+            return None
+
+        date_convert = datetime.strptime(date, '%d/%m/%Y %H:%M')
+        return date_convert.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def calc_number_months(self, date):
+        if len(date) > 0:
+            return None
+
+        date_convert = datetime.strptime(date, '%d/%m/%Y %H:%M')
+        today = datetime.now()
+
+        years = today.year - date_convert.year
+        months = today.month - date_convert.month
+
+        return years * 12 + months

@@ -40,18 +40,8 @@ while is_continue:
 
                 consult = db.cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
 
-                date_recent_format = None
-                number_months = None
-                if len(date_recent) > 0:
-                    date_recent_convert = datetime.strptime(date_recent, '%d/%m/%Y %H:%M')
-                    date_recent_format = date_recent_convert.strftime('%Y-%m-%d %H:%M:%S')
-
-                    today = datetime.now()
-
-                    years = today.year - date_recent_convert.year
-                    months = today.month - date_recent_convert.month
-
-                    number_months = years * 12 + months
+                date_recent_format = utils.date_format(date_recent)
+                number_months = utils.calc_number_months(date_recent)
 
                 if consult:
                     db.cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
@@ -60,7 +50,7 @@ while is_continue:
                 
                 db.conn.commit()
 
-                # CONVERTER EM EXCEL
+                '''
                 df = pd.read_sql_query('SELECT * FROM consults', db.conn)
                 df.rename(columns={
                     'phone': 'TELEFONE',
@@ -69,7 +59,7 @@ while is_continue:
                     'number_months': 'M',
                     'message': 'MENSAGEM',
                 }, inplace=True)
-                df.to_excel('consults.xlsx', index=False)
+                df.to_excel('consults.xlsx', index=False)'''
 
                 
         else:
