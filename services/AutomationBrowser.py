@@ -1,4 +1,6 @@
 import os
+import math
+import pandas as pd
 
 from time import sleep
 from selenium import webdriver
@@ -22,11 +24,37 @@ class AutomationBrowser:
     def open_page(self, url):
         self._driver.get(url)
 
-    def send_file(self, id_element, filename, delay_before=0, delay_after=0):
+    def save_temp_path(self, filename):
+        name_dir = 'temp'
+        os.makedirs(os.path.join(os.getcwd(), name_dir), exist_ok=True)
+        return os.path.join(os.getcwd(), name_dir, filename)
+
+    def send_file(self, id_element, filename, limit_per_line=0, delay_before=0):
+        file_path = self.save_temp_path(filename)
+        final_file_path = self.save_temp_path('datas.csv')
         sleep(delay_before)
+        
         element = self._driver.find_element(By.ID, id_element)
-        element.send_keys(os.path.join(os.getcwd(), 'temp', filename))
-        sleep(delay_after)
+
+        if limit_per_line > 0:
+            df_phones = pd.read_csv(file_path)
+            rounds = math.ceil(len(df_phones) / 99)
+            #print(f'Tem {len(df_phones)} linhas nesse arquivo')
+            #print(f'São necessários {rounds} voltas nesse arquivo')
+
+
+            df_phones[:limit_per_line].to_csv(final_file_path, index=False)
+            df_phones[limit_per_line:].to_csv(file_path, index=False)
+            element.send_keys(final_file_path)
+            
+            #print(len(df_phones[limit_per_line:]))
+            if len(df_phones[limit_per_line:]) == 0:
+                return False
+            
+            return True
+        
+        element.send_keys(file_path)
+        return False
 
     def click_button(self, id_element, delay_before=0, delay_after=0):
         sleep(delay_before)
@@ -43,7 +71,9 @@ class AutomationBrowser:
         return line_element.find_elements(By.TAG_NAME, 'td')
 
     def get_recaptcha_response(self):
-        return self._driver.execute_script('return document.getElementById("g-recaptcha-response").value')
+        sleep(2)
+        value = self._driver.execute_script('return document.getElementById("g-recaptcha-response").value')
+        return value
     
     def set_zoom(self, value, delay_before=0, delay_after=0):
         sleep(delay_before)

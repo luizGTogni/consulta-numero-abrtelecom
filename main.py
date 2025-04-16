@@ -1,16 +1,16 @@
 import pandas as pd
 import shutil
-import math
 
 from db.DBConfig import DBConfig
 from services.AutomationBrowser import AutomationBrowser
 
-from os import path, makedirs, rename, remove
+from os import path, makedirs, rename, remove, getcwd
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 from datetime import datetime
 
-FILE_PATH = path.join(path.dirname(__file__), 'temp')
+FILE_PATH = path.join(getcwd(), 'temp')
+LIMIT_PER_ROUND = 99
 INITIAL_URL = 'https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg'
 
 db = DBConfig(name_db='data')
@@ -20,6 +20,7 @@ Tk().withdraw()
 
 if path.exists(f'{FILE_PATH}/phones.csv'):
     remove(f'{FILE_PATH}/phones.csv')
+    
 
 file = askopenfilename(title='Selecione o arquivo de número de telefones', filetypes=[('Arquivo, CSV', '*.csv'), ("Arquivos Excel", "*.xlsx *.xls")])
 filename = path.basename(file)
@@ -27,31 +28,22 @@ makedirs(FILE_PATH, exist_ok=True)
 shutil.copy(file, FILE_PATH)
 rename(f'{FILE_PATH}/{filename}', f'{FILE_PATH}/phones.csv')
 
-df_phones = pd.read_csv(f'{FILE_PATH}/phones.csv')
-rounds_scrapping = math.ceil(len(df_phones) / 99)
-print(f'Tem {len(df_phones)} linhas nesse arquivo')
-print(f'São necessários {rounds_scrapping} voltas nesse arquivo')
+is_continue = True
 
-count = 0
-
-while count < rounds_scrapping:
-    start = 99 * count
-    count += 1
-    end = count * 99
-
-    df_phones[start:end].to_csv('temp/datas.csv', index=False)
-
-    automation.send_file(id_element='arquivo', filename='datas.csv')
-
-    is_recaptcha_resolved = automation.get_recaptcha_response()
+while is_continue:
+    is_continue = automation.send_file(id_element='arquivo', filename='phones.csv', limit_per_line=99)
     is_warning_recaptcha_valid = True
 
-    while not is_recaptcha_resolved:
-        if is_recaptcha_resolved:
+    is_recaptcha_response = False
+
+    while not is_recaptcha_response:
+        is_recaptcha_response = automation.get_recaptcha_response()
+
+        if is_recaptcha_response:
             automation.set_zoom(value=50, delay_after=2)
             automation.click_button(id_element='idSubmit', delay_after=4)
             table_lines = automation.get_lines_table(id_table='resultado')
-    
+
             for line in table_lines:
                 column = automation.get_value_column(line_element=line)
                 phone = column[0].text
