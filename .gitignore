@@ -1,6 +1,7 @@
 data.db
 consults.xlsx
 temp/**
+final/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
