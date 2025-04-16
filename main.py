@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 
 from db.DBConfig import DBConfig
@@ -15,6 +16,7 @@ utils = Utils()
 filename_default = utils.select_file()
 
 is_continue = True
+start_total_time = time.time()
 while is_continue:
     is_continue = automation.send_file(id_element='arquivo', filename=filename_default, limit_per_line=LIMIT_PER_ROUND)
     is_warning_recaptcha_valid = True
@@ -75,7 +77,9 @@ while is_continue:
                 print('RESOLVA O RECAPTCHA MANUALMENTE')
                 is_warning_recaptcha_valid = False
 
-utils.remove(utils.FILE_PATH)
+utils.remove(utils.FILE_PATH, is_purge=True)
 automation.set_zoom(100, delay_after=2)
+end_total_time = time.time()
+print(f"Tempo de execução: {end_total_time - start_total_time:.4f} segundos")
 automation.close()
 db.close()

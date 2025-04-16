@@ -9,8 +9,17 @@ class Utils:
     def __init__(self):
         self.FILE_PATH = os.path.join(os.getcwd(), 'temp')
 
-    def remove(self, path):
+    def remove(self, path, is_purge=False):
         if os.path.exists(path):
+            if is_purge:
+                files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
+                for file in files:
+                    os.remove(os.path.join(path, file))
+                
+                os.removedirs(path)
+                return
+
             os.remove(path)
 
     def select_file(self, title='Selecione o arquivo', filename_default=f'{time.time()}'):
