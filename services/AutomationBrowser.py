@@ -68,7 +68,8 @@ class AutomationBrowser:
         return table_body.find_elements(By.TAG_NAME, 'tr')
     
     def get_value_column(self, line_element):
-        return line_element.find_elements(By.TAG_NAME, 'td')
+        column = line_element.find_elements(By.TAG_NAME, 'td')
+        return { 'phone': column[0].text, 'provider_name': column[1].text, 'date_recent': column[3].text, 'message': column[4].text }
 
     def get_recaptcha_response(self):
         sleep(2)
