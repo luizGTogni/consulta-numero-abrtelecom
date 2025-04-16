@@ -5,8 +5,6 @@ import time
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
-# GERAR UM NOME ALEÁTORIO E RETONAR
-
 class Utils:
     def __init__(self):
         self.FILE_PATH = os.path.join(os.getcwd(), 'temp')
