@@ -1,15 +1,15 @@
 import time
-import pandas as pd
 
 from db.DBConfig import DBConfig
+from db.Consult import Consult
 from services.Utils import Utils
 from services.AutomationBrowser import AutomationBrowser
-from datetime import datetime
 
 LIMIT_PER_ROUND = 99
 INITIAL_URL = 'https://consultanumero.abrtelecom.com.br/consultanumero/consulta/consultaHistoricoRecenteCtg'
 
 db = DBConfig(name_db='data')
+consult = Consult(db)
 automation = AutomationBrowser(INITIAL_URL)
 utils = Utils()
 
@@ -38,18 +38,16 @@ while is_continue:
                 date_recent = column[3].text
                 message = column[4].text
 
-                consult = db.cursor.execute('SELECT * FROM consults WHERE phone = (?)', (phone,)).fetchone()
+                consult_response = consult.select_by_phone(phone)
 
                 date_recent_format = utils.date_format(date_recent)
                 number_months = utils.calc_number_months(date_recent)
 
-                if consult:
-                    db.cursor.execute('UPDATE consults SET phone = ?, provider_name = ?, date_recent = ?, number_months = ?, message = ? WHERE phone = ?', (phone, provider_name, date_recent_format, number_months, message, phone))
+                if consult_response:
+                    consult.update_by_phone(phone, provider_name, date_recent_format, number_months, message)
                 else:
-                    db.cursor.execute("INSERT INTO consults (phone, provider_name, date_recent, number_months, message) VALUES (?, ?, ?, ?, ?)", (phone, provider_name, date_recent_format, number_months, message))
+                    consult.create_by_phone(phone, provider_name, date_recent_format, number_months, message)
                 
-                db.conn.commit()
-
                 '''
                 df = pd.read_sql_query('SELECT * FROM consults', db.conn)
                 df.rename(columns={
@@ -60,8 +58,7 @@ while is_continue:
                     'message': 'MENSAGEM',
                 }, inplace=True)
                 df.to_excel('consults.xlsx', index=False)'''
-
-                
+   
         else:
             if is_warning_recaptcha_valid:
                 print('RESOLVA O RECAPTCHA MANUALMENTE')
