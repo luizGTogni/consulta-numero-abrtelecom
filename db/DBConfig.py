@@ -21,4 +21,4 @@ class DBConfig:
         self.conn.commit()
 
     def close(self):
-        return self.conn.close()
+        self.conn.close()
