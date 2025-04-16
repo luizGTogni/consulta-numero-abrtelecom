@@ -22,6 +22,8 @@ class AutomationBrowser:
         if len(initial_url) > 0:
             self.open_page(initial_url)
 
+        print('************ SISTEMA INICIOU ************\n')
+
     def open_page(self, url):
         self._driver.get(url)
 
@@ -39,15 +41,11 @@ class AutomationBrowser:
 
         if limit_per_line > 0:
             df_phones = pd.read_csv(file_path)
-            rounds = math.ceil(len(df_phones) / 99)
-            #print(f'Tem {len(df_phones)} linhas nesse arquivo')
-            #print(f'São necessários {rounds} voltas nesse arquivo')
 
             df_phones[:limit_per_line].to_csv(final_file_path, index=False)
             df_phones[limit_per_line:].to_csv(file_path, index=False)
             element.send_keys(final_file_path)
             
-            #print(len(df_phones[limit_per_line:]))
             if len(df_phones[limit_per_line:]) == 0:
                 return False
             

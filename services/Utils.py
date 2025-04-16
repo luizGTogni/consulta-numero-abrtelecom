@@ -1,6 +1,8 @@
 import os
 import shutil
 import time
+import math
+import pandas as pd
 
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
@@ -35,6 +37,11 @@ class Utils:
         os.makedirs(self.FILE_PATH, exist_ok=True)
         shutil.copy(file, self.FILE_PATH)
         os.rename(os.path.join(self.FILE_PATH, filename), os.path.join(self.FILE_PATH, new_filename))
+
+        df_phones = pd.read_csv(os.path.join(self.FILE_PATH, new_filename))
+        total_rounds = math.ceil(len(df_phones) / 99)
+        print(f'{len(df_phones)} LINHAS\n')
+        print(f'VOLTAS NECESSÁRIAS {total_rounds}\n')
 
         return new_filename
     

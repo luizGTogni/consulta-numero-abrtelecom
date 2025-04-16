@@ -24,6 +24,7 @@ class Consult:
         self.db.conn.commit()
 
     def to_excel(self):
+        print('CRIANDO ARQUIVO FINAL DE CONSULTAS...\n')
         df = pd.read_sql_query('SELECT * FROM consults', self.db.conn)
         df.rename(columns={
             'phone': 'TELEFONE',
@@ -35,3 +36,4 @@ class Consult:
         os.makedirs(os.path.join(os.getcwd(), 'final'), exist_ok=True)
         filename = f'{time.time()}-consults.xlsx'
         df.to_excel(os.path.join(os.getcwd(), 'final', filename), index=False)
+        print('ARQUIVO FINAL DE CONSULTAS CRIADO...\n')
